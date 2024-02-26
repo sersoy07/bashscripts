@@ -36,7 +36,7 @@
 
 - Make the *secon.sh* file executable by using *chmod 755 secon.sh* 
 
--Install your vncviewer and RDP app and change the command for vncviewer command in the section CONNECTION *tigervnc* for VNC (*apt install tigervnc*), *xfreerdp* for RDP (*apt install freerdp*). 
+- Install your vncviewer and RDP app and change the command for vncviewer command in the section CONNECTION *tigervnc* for VNC (*apt install tigervnc*), *xfreerdp* for RDP (*apt install freerdp*). 
 
 - Check output of *nslookup* command. Is IP in column 2 or column 3? According to column number change thednscheck=$( nslookup $1 | awk '/'"Address"'/ {print $2}') parameter from $2 to $3 in ipaddresscheck function 
 
