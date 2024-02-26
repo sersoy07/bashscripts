@@ -76,7 +76,14 @@ connectiontypecheck(){
 ipv4check(){
     if [[ "$1"  =~ \s{0,}([1,2]{0,1}[0-9]{0,1}[0-9].){3}[1,2]{0,1}[0-9]{0,1}[0-9]\s{0,} ]]
     then
-        ipv4flag=40
+        IFS='.'
+        local ipv4=($1)
+        if [[ ${ipv4[0]} -le 255 && ${ipv4[1]} -le 255 && ${ipv4[2]} -le 255 && ${ipv4[3]} -le 255 ]]
+        then
+            ipv4flag=40
+        else
+            ipv4flag=41
+        fi
     else
         ipv4flag=41
     fi
