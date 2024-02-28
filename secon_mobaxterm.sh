@@ -75,6 +75,7 @@ connectiontypecheck(){
 
 ipv4check(){
     if [[ "$1"  =~ \s{0,}([1,2]{0,1}[0-9]{0,1}[0-9].){3}[1,2]{0,1}[0-9]{0,1}[0-9]\s{0,} ]]
+    then
         IFS='.'
         local ipv4=($1)
         if [[ ${ipv4[0]} -le 255 && ${ipv4[1]} -le 255 && ${ipv4[2]} -le 255 && ${ipv4[3]} -le 255 ]]
@@ -294,7 +295,7 @@ case "$stype" in
         ssh -l $username $ipaddress -p $port 2>&1 | tee -a  $log_file
         ;;
     telnet)
-        telnet $ipaddress $port -l $username 2>&1 | tee -a $log_file
+        telnet-l $username $ipaddress $port  2>&1 | tee -a $log_file
         ;;
     vnc)
         vncviewer.exe $ipaddress:$port   2>&1 | tee -a $log_file
