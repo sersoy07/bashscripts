@@ -119,7 +119,7 @@ ipaddresscheck(){
         fi
     else
         echo $1
-        dnscheck=$( nslookup $1 | awk '/'"Address"'/ {print $2}')
+        dnscheck=$( nslookup $1 | awk '/'"Address"'/ {print $3}')
         if [[ $dnscheck == "" ]]
         then
             echo -e "$1 Please check IP address or selection. If you enter domain name, it wasn't reso
