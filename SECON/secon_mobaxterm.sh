@@ -17,7 +17,7 @@ supportedconnections=("ftp" "rdp"  "sftp" "ssh" "telnet" "vnc")
 #2. Check output of nslookup command. Is IP in column 2 or column3 ? According to column number change thednscheck=$( nslookup $1 | awk '/'"Address"'/ {print $2}') parameter from $2 to $3  in ipaddresscheck function
 
 
-#3. Install your vncviewer and RDP app and change the command for vncviewer command in the section CONNECTION [tigervnc for VNC on Fedora (sudo yum install tigervnc), xfreerdp for RDP on Fedora (sudo yum install xfreerdp)].
+#3. Install your vncviewer and RDP app and change the command for vncviewer command in the section CONNECTION [tigervnc for VNC on Mobaxterm (apt install tigervnc), xfreerdp for RDP on Mobaxterm (apt install freerdp)].
 
 
 #4. Send ping to specific IP(ex:8.8.8.8). If your ping doesn't stop after 5th ICMP packet, in the test_ping function, add count for ping(ex:"ping -c 5 $ipaddress" for Fedora OS).
@@ -35,7 +35,7 @@ supportedconnections=("ftp" "rdp"  "sftp" "ssh" "telnet" "vnc")
  # In addition, add the same error to case_tshoot function in Tshoot function section and define the test cases that you want to run.
  
  
-#8. In this sample code, we run different test functions for different errors. If you want to run all tshoot test functions to collect data independent from error type. You can change the "case_tshoot $error" with "test_ping" and then go to "test_ping" function and at the end of funcion you can call test_route function and go to the end of test_route function add test_trace...
+#8. In this sample code, we run different test functions for different errors. If you want to run all tshoot test functions to collect data independent from error type. You can change the "case_tshoot $error" with "test_ping" and then go to "test_ping" function and at the end of funcion you can call test_route function and go to the end of test_route function add test_#ace...
 
  
 #9. You can add your tshoot test functions and improve the code.
@@ -74,19 +74,14 @@ connectiontypecheck(){
 
 
 ipv4check(){
-    if [[ "$1"  =~ \s{0,}([1,2]{0,1}[0-9]{0,1}[0-9].){3}[1,2]{0,1}[0-9]{0,1}[0-9]\s{0,} ]]
+
+    if [[ "$1"  =~ ^\s{0,}([1,2]{0,1}[0-9]{0,1}[0-9]{1}.){3}[1,2]{0,1}[0-9]{0,1}[0-9]{1}\s{0,}$ ]]
     then
-        IFS='.'
-        local ipv4=($1)
-        if [[ ${ipv4[0]} -le 255 && ${ipv4[1]} -le 255 && ${ipv4[2]} -le 255 && ${ipv4[3]} -le 255 ]]
-        then
-            ipv4flag=40
-        else
-            ipv4flag=41
-        fi
+        ipv4flag=40
     else
         ipv4flag=41
     fi
+
 }
 
 
@@ -145,7 +140,7 @@ hostiplistandselect(){
     awk -v IGNORECASE=1 -v i=1 '/'"$stype"'/ {print i++,tolower($1),$2, $4}' $hostfile | tee /tmp/secon.out
     read -p "Please enter the selection number or IP address:" selection
     read -p "Please enter the port number or leave empty for default:" port
-    if ! [[ $stype == "vnc" ]]
+    if ! [[ $stype == "vnc" || $stype == "telnet" ]]
     then
         read -p "Please enter the username or leave empty for default:" username
     fi
@@ -286,7 +281,7 @@ case "$stype" in
         ftp $username@$ipaddress 2>&1 | tee -a $log_file
         ;;
     rdp)
-        xfreerdp /u:$username /v:$ipaddress:$port  2>&1 | tee -a $log_file
+        xfreerdp.exe /u:$username /v:$ipaddress:$port  2>&1 | tee -a $log_file
         ;;
     sftp)
         sftp $username@$ipaddress 2>&1 | tee -a $log_file
@@ -295,10 +290,10 @@ case "$stype" in
         ssh -l $username $ipaddress -p $port 2>&1 | tee -a  $log_file
         ;;
     telnet)
-        telnet $ipaddress $port -l $username 2>&1 | tee -a $log_file
+        telnet $ipaddress $port 2>&1 | tee -a $log_file
         ;;
     vnc)
-        vncviewer $ipaddress:$port   2>&1 | tee -a $log_file
+        vncviewer.exe $ipaddress:$port   2>&1 | tee -a $log_file
         ;;
 esac
 
@@ -313,7 +308,7 @@ esac
 test_ping(){
     echo -e "\n*TEST (PING) IN PROGRESS ..."
     echo  "### TEST (PING) STARTS" > "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
-    ping -c 5 $ipaddress  >> "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
+    ping $ipaddress  >> "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
     sleep 8
     [[ $( tail -n 3 "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot" ) =~ ([0-1]{0,1}[0-9]{1,2})%.*loss ]]
     [[ ${BASH_REMATCH[0]} =~ ([0-1]{0,1}[0-9]{1,2}) ]]
@@ -344,8 +339,9 @@ test_route(){
     else
         echo -e "\t\tDefault route FAILED."
     fi
+    ipconfig.exe  | grep -B 4 -A 2 -T $( PATHPING.EXE -n -w 1 -h 1 -q 1 $ipaddress | head -n 4 | tail -n 1 | awk '{print $2}')  >> "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
     echo -e "\t\tRouting Information:"
-    ip route get $ipaddress | tee -a "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot" 
+    echo -e "\t\t$(tail -7 $log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot)"
 }
 
 
@@ -353,40 +349,38 @@ test_route(){
 test_traceroute(){
     echo -e "\n*TEST (TRACEROUTE) IN PROGRESS ..."
     echo  -e "\n### TEST (TRACEROUTE) STARTS" >> "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
-    traceroute $ipaddress  >> "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
+    tracert.exe $ipaddress  >> "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot"
     [[ $(cat "$log_folder/tshoot/tshoot-$stype-$ipaddress-$log_date.tshoot") =~ (TRACEROUTE).* ]]; echo "$BASH_REMATCH" | awk -e '$1 ~ /^[0-9]{0,1}[1-9]/ {print $0}' | awk -v max=0 -v ips="" '
     {
         count = 0
         sum = 0
         avg =0
         
-        if (  $2 == "*" ) 
-            avg = 0
-        else if ( $4 == "*" && $6 == "*" && $8 == "*" )
+        if ( $2 == "*" && $4 == "*" && $6 == "*" )
             avg = 0
         else
         {
-            if ( $4 != "*" )
+            if ( $2 != "*" )
             {
                 count+=1
-                sum+=$4
+                sum+=$2
+            }
+            if ( $4 != "*" )
+            {
+                count += 1
+                sum += $4
             }
             if ( $6 != "*" )
             {
                 count += 1
                 sum += $6
             }
-            if ( $8 != "*" )
-            {
-                count += 1
-                sum += $8
-            }
             if ( sum > 0 )
             {    avg = sum/count
                 if ( avg > max )
                 {
                     max = avg
-                    ips = $2
+                    ips = $8
                 }
             }
         }
